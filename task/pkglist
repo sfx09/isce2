@@ -1,0 +1,15 @@
+cmake
+cython3
+g++
+gcc
+gfortran
+libfftw3-single3
+libgdal-dev
+libhdf5-dev
+libmotif-dev
+libopencv-dev
+make
+python3-gdal
+python3-h5py
+python3-numpy
+python3-scipy
