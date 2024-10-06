@@ -4,6 +4,7 @@ cython3
 g++
 gcc
 gfortran
+git
 libfftw3-dev
 libfftw3-single3
 libgdal-dev
