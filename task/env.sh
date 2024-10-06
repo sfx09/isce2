@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
 export ISCE_ROOT="$HOME/projects/isce2"
 

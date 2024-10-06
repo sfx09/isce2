@@ -1,8 +1,10 @@
 cmake
+curl
 cython3
 g++
 gcc
 gfortran
+libfftw3-dev
 libfftw3-single3
 libgdal-dev
 libhdf5-dev
