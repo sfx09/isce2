@@ -5,18 +5,23 @@ source .venv/bin/activate
 
 set -e 
 
+mkdir -p artifacts/{dem,slc,orbits,aux}
+
 # download SLC files
 python3 slc.py
 
-# download orbit files
-dloadOrbits.py
+cd artifacts
+
+# download orbit files might not be required, since stackSentinal re-fetches these values
+dloadOrbits.py -d orbits
+
+# downloading AUX files might not be required, since SLCs are dated after 2015. (no error-correction needed)
+wget https://sar-mpc.eu/download/ca97845e-1314-4817-91d8-f39afbeff74d/ -O aux/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.zip
 
 # download DEM
-dem.py -a stitch -b '18 20 -100 -97' -r -s 1 -c -d artifacts/dem
-
-# download AUX files
-
+cd dem
+dem.py -a stitch -b 44 47 -65 -61 -c
+cd ..
 
 # run the script
-# stackSentinel.py -s artifacts/slc -d artifacts/dem/demLat_N18_N20_Lon_W100_W097.dem.wgs84 -b '19 20 -99.5 -98.5' -a artifacts/aux -o artifacts/orbits -C NESD -W slc
-
+stackSentinel.py -d dem/demLat_N44_N47_Lon_W065_W061.dem.wgs84 -s slc -a aux -o orbits -W slc

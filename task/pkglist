@@ -9,6 +9,7 @@ libhdf5-dev
 libmotif-dev
 libopencv-dev
 make
+python3-pip
 python3-gdal
 python3-h5py
 python3-numpy
