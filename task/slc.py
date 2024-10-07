@@ -1,5 +1,4 @@
 import sys
-import csv
 import math
 import asf_search as asf
 from datetime import datetime
@@ -17,7 +16,7 @@ def get_bounding_box(slcs):
         math.floor(min(latitudes)), 
         math.ceil(max(latitudes)), 
         math.floor(min(longitudes)), 
-        math.ceil(max(longitudes)),
+        math.floor(max(longitudes)),
     )
 
 
@@ -39,8 +38,7 @@ if sys.argv[1] == 'configure':
     # write orbital dates to csv
     dates = get_orbit_dates(slcs)
     with open('artifacts/orbits/dates.csv', 'w') as f:
-        writer = csv.writer(f)
-        writer.writerows(dates)
+        f.write('\n'.join(dates))
 
     # write bounding box dimensions to file
     bbox = get_bounding_box(slcs)

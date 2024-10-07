@@ -1,0 +1,143 @@
+#!/usr/bin/env bash
+
+set -e
+
+# automagically get the ISCE root path
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ISCE_ROOT=$(dirname "$SCRIPT_DIR")
+export ISCE_ROOT
+
+export ISCE_BUILD_PATH="$ISCE_ROOT/build"
+
+export ISCE_BASE_PKG_PATH="$ISCE_BUILD_PATH/packages"
+export ISCE_BASE_APP_PATH="$ISCE_BUILD_PATH/packages/isce2/applications"
+
+export ISCE_STCK_PKG_PATH="$ISCE_ROOT/contrib/stack"
+export ISCE_STCK_APP_PATH="$ISCE_STCK_PKG_PATH/topsStack"
+
+export PYTHONPATH="$ISCE_BASE_PKG_PATH:$ISCE_STCK_PKG_PATH:$PYTHONPATH"
+export PATH="$ISCE_BASE_APP_PATH:$ISCE_STCK_APP_PATH:$PATH"
+
+SLC_LINK="https://korraicom-my.sharepoint.com/:t:/g/personal/rahul_korrai_com/EbnUgoKGx51JjfFA9Q9N6UwB9bowJox52oPs1AgUVh8Fzg?download=1"
+AUX_LINK="https://sar-mpc.eu/download/ca97845e-1314-4817-91d8-f39afbeff74d/"
+AUX_FILE="S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.zip"
+
+function get_slc_list {
+  wget "$SLC_LINK" -O artifacts/slc/SLC_LIST.txt
+} 
+
+function get_slc_metadata {
+  python3 slc.py configure
+}
+
+function get_slc_data {
+  python3 slc.py download
+}
+
+function get_orbits_data {
+  (
+    cd artifacts/orbits
+    xargs -I {} mkdir -p {} < dates.csv
+    xargs -I{} sh -c 'dloadOrbits.py -b {} -e {} -d {}' < dates.csv
+  )
+}
+
+function get_aux_data {
+  wget "$AUX_LINK" -O "artifacts/aux/$AUX_FILE"
+}
+
+function get_dem_data {
+  (
+    cd artifacts/dem
+    xargs dem.py -a stitch -c -b < bbox
+  )
+}
+
+function build_task_runners {
+  (
+    cd artifacts
+    DEM_FILE=$(find . -name '*.dem.wgs84' | tail -n 1)
+    stackSentinel.py -d "$DEM_FILE" -s slc -a aux -o orbits -W slc
+  )
+}
+
+function run_tasks {
+  (
+    cd artifacts
+    chmod +x run_files/*
+    ls run_files | xargs -I {} bash {}
+  )
+}
+
+function init {
+  apt-get update
+  xargs sudo apt-get install -y < pkglist
+}
+
+function build {
+  mkdir -p "$ISCE_BUILD_PATH"
+  (
+    cd "$ISCE_BUILD_PATH"
+    cmake .. -DCMAKE_INSTALL_PREFIX="$ISCE_BUILD_PATH"
+    make install
+  )
+}
+
+function clean {
+  rm -r artifacts
+}
+
+function run {
+  echo "Fetching SLC list from sharepoint"
+  get_slc_list &> artifacts/logs/download_slc_file.log
+  
+  echo "Generating bounding box and orbital dates"
+  get_slc_metadata
+  
+  echo "Fetching SLC data"
+  get_slc_data &> artifacts/logs/download_slc.log
+  
+  # cat artifacts/orbits/dates.csv | xargs echo "Fetching Orbital data for"
+  # get_orbits_data &> artifacts/logs/download_orbit.log
+  
+  echo "Fetching AUX file from $AUX_LINK"
+  get_aux_data &> artifacts/logs/download_aux.log
+  
+  echo "Fetching DEM for $(cat artifacts/dem/bbox)"
+  get_dem_data &> artifacts/logs/download_dem.log
+  
+  DEM_FILE=$(find . -name '*.dem.wgs84' | tail -n 1)
+  echo "Building task runners with $DEM_FILE"
+  build_task_runners &> artifacts/logs/build_task_runners.log
+
+  echo "Running tasks"
+  run_tasks &> artifacts/logs/run.log
+}
+
+function main {
+  case "$1" in
+      build)
+        build
+        ;;
+      run)
+        run
+        ;;
+      clean)
+        clean
+        ;;
+      *)
+        echo "Usage: $0 [OPTION]"
+  	echo "OPTIONS:"
+        echo "  init    Install required system dependencies."
+        echo "  build   Compile the project and prepare for execution."
+        echo "  run     Execute the project."
+        echo "  clean   Remove build artifacts and temporary files."
+        exit 1
+        ;;
+  esac
+}
+
+# set CWD and create directories to ensure script runs consistently
+cd "$SCRIPT_DIR"
+mkdir -p artifacts/{dem,aux,slc,orbits,logs}
+main "$1"
