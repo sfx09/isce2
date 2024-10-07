@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 
-export ISCE_ROOT="$HOME/projects/isce2"
+# automagically get the ISCE root path
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+ISCE_ROOT=$(dirname "$SCRIPT_DIR")
+export ISCE_ROOT
 
 export ISCE_BUILD_PATH="$ISCE_ROOT/build"
 
@@ -68,8 +71,9 @@ function get_dem_data {
 
 function get_run_scripts {
   (
+    DEM_FILE=$(find . -iname '*.dem.wgs84' | tail -n 1)
     cd artifacts || exit
-    stackSentinel.py -d dem/demLat_N44_N47_Lon_W065_W061.dem.wgs84 -s slc -a aux -o orbits -W slc
+    stackSentinel.py -d "$DEM_FILE" -s slc -a aux -o orbits -W slc
   )
 }
 
