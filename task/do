@@ -74,7 +74,7 @@ function run_tasks {
 }
 
 function init {
-  apt-get update
+  sudo apt-get update
   xargs sudo apt-get install -y < pkglist
 }
 
