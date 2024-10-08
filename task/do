@@ -121,6 +121,9 @@ function run {
 
 function main {
   case "$1" in
+      init)
+        init
+        ;;
       build)
         build
         ;;
