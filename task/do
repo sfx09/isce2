@@ -26,7 +26,7 @@ function get_slc_list {
   wget "$SLC_LINK" -O artifacts/slc/SLC_LIST.txt
 } 
 
-function get_slc_metadata {
+function generate_slc_metadata {
   python3 slc.py configure
 }
 
@@ -65,7 +65,11 @@ function run_tasks {
   (
     cd artifacts
     chmod +x run_files/*
-    ls run_files | xargs -I {} bash {}
+    for file in run_files/*; do
+      fname=$(basename "$file")
+      echo "Executing task $fname"
+      bash "$file" &> "logs/$fname.log"
+    done
   )
 }
 
@@ -92,7 +96,7 @@ function run {
   get_slc_list &> artifacts/logs/download_slc_file.log
   
   echo "Generating bounding box and orbital dates"
-  get_slc_metadata
+  generate_slc_metadata &> artifacts/logs/generate_task_metadata.log
   
   echo "Fetching SLC data"
   get_slc_data &> artifacts/logs/download_slc.log
@@ -110,8 +114,7 @@ function run {
   echo "Building task runners with $DEM_FILE"
   build_task_runners &> artifacts/logs/build_task_runners.log
 
-  echo "Running tasks"
-  run_tasks &> artifacts/logs/run.log
+  run_tasks
 }
 
 function main {
