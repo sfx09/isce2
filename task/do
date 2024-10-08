@@ -67,7 +67,7 @@ function run_tasks {
     chmod +x run_files/*
     for file in run_files/*; do
       fname=$(basename "$file")
-      echo "Executing task $fname"
+      echo "$(date) Executing task $fname"
       bash "$file" &> "logs/$fname.log"
     done
   )
@@ -92,26 +92,28 @@ function clean {
 }
 
 function run {
-  echo "Fetching SLC list from sharepoint"
+  echo "$(date) Fetching SLC list from sharepoint"
   get_slc_list &> artifacts/logs/download_slc_file.log
   
-  echo "Generating bounding box and orbital dates"
+  echo "$(date) Generating bounding box and orbital dates"
   generate_slc_metadata &> artifacts/logs/generate_task_metadata.log
   
-  echo "Fetching SLC data"
-  get_slc_data &> artifacts/logs/download_slc.log
+  echo "$(date) Fetching SLC data"
+  get_slc_data &> artifacts/logs/download_slc.log &
   
   # cat artifacts/orbits/dates.csv | xargs echo "Fetching Orbital data for"
   # get_orbits_data &> artifacts/logs/download_orbit.log
   
-  echo "Fetching AUX file from $AUX_LINK"
-  get_aux_data &> artifacts/logs/download_aux.log
+  echo "$(date) Fetching AUX file from $AUX_LINK"
+  get_aux_data &> artifacts/logs/download_aux.log &
   
-  echo "Fetching DEM for $(cat artifacts/dem/bbox)"
-  get_dem_data &> artifacts/logs/download_dem.log
+  echo "$(date) Fetching DEM for $(cat artifacts/dem/bbox)"
+  get_dem_data &> artifacts/logs/download_dem.log &
   
+  wait 
+
   DEM_FILE=$(find . -name '*.dem.wgs84' | tail -n 1)
-  echo "Building task runners with $DEM_FILE"
+  echo "$(date) Building task runners with $DEM_FILE"
   build_task_runners &> artifacts/logs/build_task_runners.log
 
   run_tasks
