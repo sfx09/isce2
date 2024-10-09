@@ -1,10 +1,22 @@
 import sys
 import math
+import json
 import asf_search as asf
 from datetime import datetime
 
 
-def get_bounding_box(slcs):
+def get_bounding_box(aoi, slcs):
+    aoi_coords = aoi['features'][0]['geometry']['coordinates'][0]
+    aoi_longitudes = [ point[0] for point in aoi_coords ] 
+    aoi_latitudes =  [ point[1] for point in aoi_coords ]
+
+    aoi_bbox = (
+        math.floor(min(aoi_latitudes)), 
+        math.ceil(max(aoi_latitudes)), 
+        math.floor(min(aoi_longitudes)), 
+        math.ceil(max(aoi_longitudes)),
+    )
+
     longitudes = []
     latitudes = []
     for slc in slcs:
@@ -12,13 +24,19 @@ def get_bounding_box(slcs):
         longitudes += [ point[0] for point in coords ]
         latitudes += [ point[1] for point in coords ]
 
-    return (
+    bbox = (
         math.floor(min(latitudes)), 
         math.ceil(max(latitudes)), 
         math.floor(min(longitudes)), 
-        math.floor(max(longitudes)),
+        math.ceil(max(longitudes)),
     )
 
+    return (
+        max(aoi_bbox[0], bbox[0]),
+        min(aoi_bbox[1], bbox[1]),
+        max(aoi_bbox[2], bbox[2]),
+        min(aoi_bbox[3], bbox[3]),
+    )
 
 def get_orbit_dates(slcs):
     dates = []
@@ -41,7 +59,10 @@ if sys.argv[1] == 'configure':
         f.write('\n'.join(dates))
 
     # write bounding box dimensions to file
-    bbox = get_bounding_box(slcs)
+    with open('aoi.geojson', 'r') as f:
+        aoi = json.load(f) 
+
+    bbox = get_bounding_box(aoi, slcs)
     with open('artifacts/dem/bbox', 'w') as f:
         s, n, w, e = bbox
         f.write(f'{s} {n} {w} {e}')
