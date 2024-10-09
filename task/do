@@ -22,6 +22,8 @@ SLC_LINK="https://korraicom-my.sharepoint.com/:t:/g/personal/rahul_korrai_com/Eb
 AUX_LINK="https://sar-mpc.eu/download/ca97845e-1314-4817-91d8-f39afbeff74d/"
 AUX_FILE="S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.zip"
 
+NTHREADS=8
+
 function get_slc_list {
   wget "$SLC_LINK" -O artifacts/slc/SLC_LIST.txt
 } 
@@ -57,7 +59,7 @@ function build_task_runners {
   (
     cd artifacts
     DEM_FILE=$(find . -name '*.dem.wgs84' | tail -n 1)
-    stackSentinel.py -d "$DEM_FILE" -s slc -a aux -o orbits -W slc
+    stackSentinel.py -d "$DEM_FILE" -s slc -a aux -o orbits -W slc --num_proc "$NTHREADS"  --num_proc4topo "$NTHREADS"
   )
 }
 
