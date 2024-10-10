@@ -82,10 +82,10 @@ A Dockerfile is included with this task.
     ```
 2. Once the image is built, you can run the pipeline with the following command:
     ```bash
-    docker run -v artifacts:/app/task/artifacts isce task/do run
+    docker run -v ~/.netrc:/root/.netrc -v artifacts:/app/task/artifacts isce task/do run
     ```
 
 ## Assumptions/Corrections
-- Failed to create DEM for the bounding box generated for the given SLCs. The N44W61 file was missing on the server, causing the DEM stitching to fail. To resolve this, the bounding box was adjusted by the script.
-- The orbit data requied by `stackSentinel.py` did not align correctly with the data fetch by `dloadOrbits.py`. As a fix, orbit data is automatically fetched during the run file builder process.
-- Did not use the `AOI Geojson` file supplied in the problem statement.
+- The bounding box for the DEM is defined using the coordinates S (minimum latitude), N (maximum latitude), W (minimum longitude), and E (maximum longitude). The script calculates these values from the SLC coordinates and intersects them with the bounding box for AOI.geojson to determine the final bounding box.
+- The orbit data required by `stackSentinel.py` was not properly aligned with the data fetched by `dloadOrbits.py`. To resolve this, the script now automatically retrieves the necessary orbit data during the builder process.
+- There was an issue with downloading the `AOI.geojson` file from OneDrive, so it was pre-downloaded and stored in the repository.
